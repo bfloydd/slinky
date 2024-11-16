@@ -1,5 +1,8 @@
 # LinkSpy
 
+# Description
+LinkSpy is a plugin for Obsidian that helps you investigate the health of your links.
+
 ## Add commands
 - Link Spy: Find missing attachments 
 - Link Spy: Find unused attachments 
