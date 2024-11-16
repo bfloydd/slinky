@@ -18,21 +18,38 @@
 }
 
 .linkspy-copy-button {
+    background-color: var(--interactive-normal);
+    color: var(--text-normal);
     padding: 4px 8px;
-    font-size: 12px;
-    background-color: var(--interactive-accent);
-    color: var(--text-on-accent);
-    border: none;
     border-radius: 4px;
-    cursor: pointer;
+    border: 1px solid var(--background-modifier-border);
 }
 
 .linkspy-copy-button:hover {
-    background-color: var(--interactive-accent-hover);
+    background-color: var(--interactive-hover);
 }
 
 .linkspy-results-summary {
     margin-top: 20px;
     padding-top: 10px;
     border-top: 1px solid var(--background-modifier-border);
+}
+
+.linkspy-title-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 0.5em;
+}
+
+.linkspy-main-title {
+    margin: 0;
+    font-size: 1.8em;
+    color: var(--text-normal);
+}
+
+.linkspy-results-title {
+    margin: 0 0 1em 0;
+    font-size: 1.4em;
+    color: var(--text-normal);
 }

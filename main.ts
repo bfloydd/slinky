@@ -14,6 +14,7 @@ const VIEW_TYPE_RESULTS = "linkspy-results-view";
 
 class ResultsView extends ItemView {
 	private content: string = '';
+	private title: string = 'LinkSpy';
 
 	constructor(leaf: WorkspaceLeaf) {
 		super(leaf);
@@ -27,8 +28,11 @@ class ResultsView extends ItemView {
 		return "LinkSpy Results";
 	}
 
-	async setContent(content: string) {
+	async setContent(content: string, title?: string) {
 		this.content = content;
+		if (title) {
+			this.title = title;
+		}
 		await this.updateView();
 	}
 
@@ -36,15 +40,34 @@ class ResultsView extends ItemView {
 		const container = this.containerEl.children[1];
 		container.empty();
 		
-		const headerContainer = container.createDiv({
-			cls: 'linkspy-results-header'
+		// Create separate containers for each title
+		const mainTitleContainer = container.createDiv({
+			cls: 'linkspy-main-title-container'
 		});
 		
-		headerContainer.createEl('h2', { text: 'LinkSpy Results' });
+		const subTitleContainer = container.createDiv({
+			cls: 'linkspy-subtitle-container'
+		});
 		
-		const copyButton = headerContainer.createEl('button', {
+		// Add main LinkSpy title and copy button in the same row
+		const titleRow = mainTitleContainer.createDiv({
+			cls: 'linkspy-title-row'
+		});
+		
+		titleRow.createEl('h1', { 
+			text: 'LinkSpy',
+			cls: 'linkspy-main-title'
+		});
+		
+		titleRow.createEl('button', {
 			cls: 'linkspy-copy-button',
 			text: 'Copy Results'
+		});
+		
+		// Add specific results title on next line
+		subTitleContainer.createEl('h2', { 
+			text: this.title,
+			cls: 'linkspy-results-title'
 		});
 		
 		const contentDiv = container.createDiv({
@@ -112,6 +135,14 @@ export default class LinkSpy extends Plugin {
 		);
 
 		this.addCommand({
+			id: 'find-unused-attachments',
+			name: 'Find unused attachments',
+			callback: async () => {
+				await this.findUnusedAttachments();
+			}
+		});
+		
+		this.addCommand({
 			id: 'find-missing-attachments',
 			name: 'Find missing attachments',
 			callback: async () => {
@@ -119,13 +150,6 @@ export default class LinkSpy extends Plugin {
 			}
 		});
 
-		this.addCommand({
-			id: 'find-unused-attachments',
-			name: 'Find unused attachments',
-			callback: async () => {
-				await this.findUnusedAttachments();
-			}
-		});
 	}
 
 	onunload() {
@@ -197,7 +221,7 @@ export default class LinkSpy extends Plugin {
 		if (view) {
 			results.push('\n---');
 			results.push(`Summary: ${missingAttachmentsCount} missing ${missingAttachmentsCount === 1 ? 'attachment' : 'attachments'} found`);
-			await view.setContent(results.join('\n'));
+			await view.setContent(results.join('\n'), 'Missing Attachments');
 			new Notice(`Found ${missingAttachmentsCount} missing ${missingAttachmentsCount === 1 ? 'attachment' : 'attachments'}`);
 		}
 	}
@@ -280,7 +304,7 @@ export default class LinkSpy extends Plugin {
 		if (view) {
 			results.push('\n---');
 			results.push(`Summary: ${unusedAttachmentsCount} unused ${unusedAttachmentsCount === 1 ? 'attachment' : 'attachments'} found`);
-			await view.setContent(results.join('\n'));
+			await view.setContent(results.join('\n'), 'Unused Attachments');
 			new Notice(`Found ${unusedAttachmentsCount} unused ${unusedAttachmentsCount === 1 ? 'attachment' : 'attachments'}`);
 		}
 	}
