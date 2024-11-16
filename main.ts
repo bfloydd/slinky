@@ -2,10 +2,12 @@ import { App, Notice, Plugin, PluginSettingTab, Setting, TFolder, WorkspaceLeaf,
 
 interface LinkSpySettings {
 	mySetting: string;
+	attachmentFolderPath: string;
 }
 
 const DEFAULT_SETTINGS: LinkSpySettings = {
-	mySetting: 'default'
+	mySetting: 'default',
+	attachmentFolderPath: ''
 }
 
 const VIEW_TYPE_RESULTS = "linkspy-results-view";
@@ -104,6 +106,11 @@ export default class LinkSpy extends Plugin {
 	async onload() {
 		await this.loadSettings();
 
+		this.registerView(
+			VIEW_TYPE_RESULTS,
+			(leaf) => (this.resultsView = new ResultsView(leaf))
+		);
+
 		this.addCommand({
 			id: 'find-missing-attachments',
 			name: 'Find missing attachments',
@@ -112,10 +119,13 @@ export default class LinkSpy extends Plugin {
 			}
 		});
 
-		this.registerView(
-			VIEW_TYPE_RESULTS,
-			(leaf) => (this.resultsView = new ResultsView(leaf))
-		);
+		this.addCommand({
+			id: 'find-unused-attachments',
+			name: 'Find unused attachments',
+			callback: async () => {
+				await this.findUnusedAttachments();
+			}
+		});
 	}
 
 	onunload() {
@@ -124,6 +134,12 @@ export default class LinkSpy extends Plugin {
 
 	async loadSettings() {
 		this.settings = Object.assign({}, DEFAULT_SETTINGS, await this.loadData());
+		// const attachmentFolderPath = this.app.vault.getConfig('attachmentFolderPath');
+		const attachmentFolderPath = (this.app.vault as any).getConfig("attachmentFolderPath");
+		// config.attachmentFolderPath;
+		if (attachmentFolderPath) {
+			this.settings.attachmentFolderPath = attachmentFolderPath;
+		}
 	}
 
 	async saveSettings() {
@@ -144,6 +160,7 @@ export default class LinkSpy extends Plugin {
 	}
 
 	private async findMissingAttachments(): Promise<void> {
+		console.log('findMissingAttachments');
 		let missingAttachmentsCount = 0;
 		const files = this.app.vault.getMarkdownFiles();
 		let results: string[] = [];
@@ -207,5 +224,76 @@ export default class LinkSpy extends Plugin {
 		
 		workspace.revealLeaf(leaf);
 		return this.resultsView;
+	}
+
+	private async findUnusedAttachments(): Promise<void> {
+		console.log('findUnusedAttachments');
+		const imageExtensions = ['jpg', 'jpeg', 'png', 'gif', 'bmp'];
+		const allFiles = this.app.vault.getFiles();
+		
+		// Get attachment folder configuration
+		const attachmentFolderPath = (this.app.vault as any).getConfig("attachmentFolderPath");
+		const useDefaultAttachmentFolder = (this.app.vault as any).getConfig("useMarkdownLinks");
+		
+
+		console.log('--------------------------------');
+		console.log(attachmentFolderPath);
+		console.log(useDefaultAttachmentFolder);
+		console.log('--------------------------------');
+
+		const attachmentFolders: string[] = [];
+		if (attachmentFolderPath && useDefaultAttachmentFolder) {
+			// Remove leading/trailing slashes and add to folders list
+			attachmentFolders.push(attachmentFolderPath.replace(/^\/|\/$/g, ''));
+		}
+
+		const imageFiles = allFiles.filter(file => {
+			const isImage = imageExtensions.some(ext => file.extension.toLowerCase() === ext);
+			
+			// If no attachment folder is specified, or if not using default folder, check all images
+			if (!useDefaultAttachmentFolder || attachmentFolders.length === 0) {
+				return isImage;
+			}
+			
+			// Otherwise, only check images in the specified attachment folder
+			return isImage && attachmentFolders.some(folder => {
+				const filePath = file.path.replace(/^\/|\/$/g, '');
+				return filePath.startsWith(folder);
+			});
+		});
+
+		let unusedAttachmentsCount = 0;
+		let results: string[] = [];
+
+		for (const imageFile of imageFiles) {
+			const isUsed = await this.isImageReferenced(imageFile.name);
+			if (!isUsed) {
+				const logMessage = `• "${imageFile.path}": "<i>Unused attachment</i>"`;
+				results.push(logMessage);
+				unusedAttachmentsCount++;
+			}
+		}
+
+		const view = await this.activateView();
+		if (view) {
+			results.push('\n---');
+			results.push(`Summary: ${unusedAttachmentsCount} unused ${unusedAttachmentsCount === 1 ? 'attachment' : 'attachments'} found`);
+			await view.setContent(results.join('\n'));
+			new Notice(`Found ${unusedAttachmentsCount} unused ${unusedAttachmentsCount === 1 ? 'attachment' : 'attachments'}`);
+		}
+	}
+
+	private async isImageReferenced(imageName: string): Promise<boolean> {
+		const markdownFiles = this.app.vault.getMarkdownFiles();
+		
+		for (const file of markdownFiles) {
+			const content = await this.app.vault.read(file);
+			const imageLinks = this.extractImageLinks(content);
+			if (imageLinks.includes(imageName)) {
+				return true;
+			}
+		}
+		
+		return false;
 	}
 }
