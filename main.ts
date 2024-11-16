@@ -234,12 +234,6 @@ export default class LinkSpy extends Plugin {
 		// Get attachment folder configuration
 		const attachmentFolderPath = (this.app.vault as any).getConfig("attachmentFolderPath");
 		const useDefaultAttachmentFolder = (this.app.vault as any).getConfig("useMarkdownLinks");
-		
-
-		console.log('--------------------------------');
-		console.log(attachmentFolderPath);
-		console.log(useDefaultAttachmentFolder);
-		console.log('--------------------------------');
 
 		const attachmentFolders: string[] = [];
 		if (attachmentFolderPath && useDefaultAttachmentFolder) {
@@ -261,6 +255,14 @@ export default class LinkSpy extends Plugin {
 				return filePath.startsWith(folder);
 			});
 		});
+
+		console.log('--------------------------------');
+		console.log("attachmentFolderPath: " + attachmentFolderPath);
+		console.log("useDefaultAttachmentFolder: " + useDefaultAttachmentFolder);
+		console.log("allFiles: " + allFiles.length);
+		console.log("imageFiles: " + imageFiles.length);
+		console.log('--------------------------------');
+
 
 		let unusedAttachmentsCount = 0;
 		let results: string[] = [];
