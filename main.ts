@@ -108,7 +108,7 @@ export default class LinkSpy extends Plugin {
 			id: 'find-missing-attachments',
 			name: 'Find missing attachments',
 			callback: async () => {
-				await this.findBrokenImageLinks();
+				await this.findMissingAttachments();
 			}
 		});
 
@@ -143,8 +143,8 @@ export default class LinkSpy extends Plugin {
 		return matches;
 	}
 
-	private async findBrokenImageLinks(): Promise<void> {
-		let brokenLinksCount = 0;
+	private async findMissingAttachments(): Promise<void> {
+		let missingAttachmentsCount = 0;
 		const files = this.app.vault.getMarkdownFiles();
 		let results: string[] = [];
 
@@ -162,7 +162,7 @@ export default class LinkSpy extends Plugin {
 						if (!exists) {
 							const logMessage = `• "${file.path}" line ${index + 1}: "<i>${imageFile}</i>"`;
 							results.push(logMessage);
-							brokenLinksCount++;
+							missingAttachmentsCount++;
 						}
 					});
 
@@ -179,9 +179,9 @@ export default class LinkSpy extends Plugin {
 		const view = await this.activateView();
 		if (view) {
 			results.push('\n---');
-			results.push(`Summary: ${brokenLinksCount} missing ${brokenLinksCount === 1 ? 'image' : 'images'} found`);
+			results.push(`Summary: ${missingAttachmentsCount} missing ${missingAttachmentsCount === 1 ? 'attachment' : 'attachments'} found`);
 			await view.setContent(results.join('\n'));
-			new Notice(`Found ${brokenLinksCount} missing ${brokenLinksCount === 1 ? 'image' : 'images'}`);
+			new Notice(`Found ${missingAttachmentsCount} missing ${missingAttachmentsCount === 1 ? 'attachment' : 'attachments'}`);
 		}
 	}
 
