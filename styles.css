@@ -1,0 +1,38 @@
+.linkspy-results-content {
+    padding: 10px;
+    user-select: text;
+    font-size: 0.85em;
+}
+
+.linkspy-results-content div {
+    margin-bottom: 8px;
+    white-space: pre-wrap;
+    word-break: break-word;
+}
+
+.linkspy-results-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1em;
+}
+
+.linkspy-copy-button {
+    padding: 4px 8px;
+    font-size: 12px;
+    background-color: var(--interactive-accent);
+    color: var(--text-on-accent);
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+}
+
+.linkspy-copy-button:hover {
+    background-color: var(--interactive-accent-hover);
+}
+
+.linkspy-results-summary {
+    margin-top: 20px;
+    padding-top: 10px;
+    border-top: 1px solid var(--background-modifier-border);
+}
