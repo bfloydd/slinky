@@ -59,4 +59,36 @@ export class FindUnusedAttachmentsCommand extends BaseCommand {
         
         return false;
     }
+
+    protected extractImageLinks(content: string): string[] {
+        const markdownImageRegex = /!\[.*?\]\((.*?)\)/g;
+        const wikiImageRegex = /!\[\[(.*?)\]\]/g;
+        
+        const links: string[] = [];
+        
+        // Extract markdown style links
+        let match;
+        while ((match = markdownImageRegex.exec(content)) !== null) {
+            if (match[1]) {
+                const path = match[1].split('#')[0].split('|')[0].trim();
+                const filename = path.split('/').pop();
+                if (filename) {
+                    links.push(filename);
+                }
+            }
+        }
+        
+        // Extract wiki style links
+        while ((match = wikiImageRegex.exec(content)) !== null) {
+            if (match[1]) {
+                const path = match[1].split('#')[0].split('|')[0].trim();
+                const filename = path.split('/').pop();
+                if (filename) {
+                    links.push(filename);
+                }
+            }
+        }
+        
+        return links;
+    }
 }

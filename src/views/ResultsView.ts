@@ -64,10 +64,17 @@ export class ResultsView extends ItemView {
             cls: 'linkspy-results-content'
         });
 
+        if (!this.content) {
+            contentDiv.createEl('div', { text: 'No results to display' });
+            return;
+        }
+
         if (this.content.includes('---')) {
-            const lines = this.content.split('\n');
+            const lines = this.content?.split('\n') || [];
             
             lines.forEach(line => {
+                if (!line) return;
+                
                 if (line.startsWith('Summary:')) {
                     const summaryEl = contentDiv.createEl('div', {
                         cls: 'linkspy-results-summary'
@@ -75,7 +82,9 @@ export class ResultsView extends ItemView {
                     summaryEl.createEl('strong', { text: line });
 
                 } else if (line.includes('"') && !line.startsWith('---')) {
-                    const [filePath, ...rest] = line.substring(2).split('" line ');
+                    const [filePath, ...rest] = (line.substring(2)?.split('" line ') || []);
+                    if (!filePath || !rest.length) return;
+                    
                     const lineEl = contentDiv.createDiv();
                     lineEl.createSpan({ text: '• ' });
                     
@@ -92,7 +101,9 @@ export class ResultsView extends ItemView {
                         }
                     });
                     
-                    const [lineNum, imageText] = rest[0].split(': ');
+                    const [lineNum, imageText] = (rest[0]?.split(': ') || []);
+                    if (!lineNum || !imageText) return;
+                    
                     lineEl.createSpan({ text: ` line ${lineNum}: ` });
                     
                     const italicMatch = imageText.match(/"<i>(.*?)<\/i>"/);
@@ -104,7 +115,8 @@ export class ResultsView extends ItemView {
                 }
             });
         } else {
-            this.content.split('\n').forEach(line => {
+            (this.content?.split('\n') || []).forEach(line => {
+                if (!line) return;
                 const lineEl = contentDiv.createDiv();
                 lineEl.innerHTML = line;
             });
