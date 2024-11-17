@@ -1,4 +1,4 @@
-import { App, Notice, Plugin, PluginSettingTab, Setting, TFolder } from 'obsidian';
+import { Plugin } from 'obsidian';
 import { FindMissingAttachmentsCommand } from './src/commands/FindMissingAttachmentsCommand';
 import { FindUnusedAttachmentsCommand } from './src/commands/FindUnusedAttachmentsCommand';
 import { ResultsView, VIEW_TYPE_RESULTS } from './src/views/ResultsView';

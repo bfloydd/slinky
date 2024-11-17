@@ -1,4 +1,4 @@
-import { Notice, TFile } from 'obsidian';
+import { Notice } from 'obsidian';
 import { BaseCommand } from './BaseCommand';
 
 export class FindMissingAttachmentsCommand extends BaseCommand {
