@@ -26,18 +26,6 @@ export default class LinkSpy extends Plugin {
 		);
 
 		this.addCommand({
-			id: 'find-unused-attachments',
-			name: 'Find unused attachments',
-			callback: async () => {
-				const view = await this.activateView();
-				if (view) {
-					const command = new FindUnusedAttachmentsCommand(this.app, view);
-					await command.execute();
-				}
-			}
-		});
-		
-		this.addCommand({
 			id: 'find-missing-attachments',
 			name: 'Find missing attachments',
 			callback: async () => {
@@ -49,6 +37,17 @@ export default class LinkSpy extends Plugin {
 			}
 		});
 
+		this.addCommand({
+			id: 'find-unused-attachments',
+			name: 'Find unused attachments',
+			callback: async () => {
+				const view = await this.activateView();
+				if (view) {
+					const command = new FindUnusedAttachmentsCommand(this.app, view);
+					await command.execute();
+				}
+			}
+		});
 	}
 
 	onunload() {
@@ -57,9 +56,7 @@ export default class LinkSpy extends Plugin {
 
 	async loadSettings() {
 		this.settings = Object.assign({}, DEFAULT_SETTINGS, await this.loadData());
-		// const attachmentFolderPath = this.app.vault.getConfig('attachmentFolderPath');
 		const attachmentFolderPath = (this.app.vault as any).getConfig("attachmentFolderPath");
-		// config.attachmentFolderPath;
 		if (attachmentFolderPath) {
 			this.settings.attachmentFolderPath = attachmentFolderPath;
 		}
