@@ -21,6 +21,7 @@ export class FindMissingAttachmentsCommand extends BaseCommand {
                         const exists = await this.imageExistsInVault(imageFile);
                         if (!exists) {
                             const logMessage = `• [[${file.path}|${file.path}]] line ${index + 1}: ${imageFile}`;
+                            console.log('Adding missing attachment:', logMessage);
                             results.push(logMessage);
                             missingAttachmentsCount++;
                         }
@@ -36,6 +37,7 @@ export class FindMissingAttachmentsCommand extends BaseCommand {
             }
         }
 
+        console.log('Final results for missing attachments:', results);
         results.push('\n---');
         results.push(`Summary: ${missingAttachmentsCount} missing ${missingAttachmentsCount === 1 ? 'attachment' : 'attachments'} found`);
         await this.resultsView.setContent(results.join('\n'), 'Missing Attachments');

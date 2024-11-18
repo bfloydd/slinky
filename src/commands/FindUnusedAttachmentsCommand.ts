@@ -35,11 +35,13 @@ export class FindUnusedAttachmentsCommand extends BaseCommand {
             const isUsed = await this.isImageReferenced(imageFile.name);
             if (!isUsed) {
                 const logMessage = `• [[${imageFile.path}|${imageFile.path}]]`;
+                console.log('Adding unused attachment:', logMessage);
                 results.push(logMessage);
                 unusedAttachmentsCount++;
             }
         }
 
+        console.log('Final results for unused attachments:', results);
         results.push('\n---');
         results.push(`Summary: ${unusedAttachmentsCount} unused ${unusedAttachmentsCount === 1 ? 'attachment' : 'attachments'} found`);
         await this.resultsView.setContent(results.join('\n'), 'Unused Attachments');
