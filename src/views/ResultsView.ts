@@ -101,7 +101,16 @@ export class ResultsView extends ItemView {
                         }
                     });
                     
-                    lineEl.createSpan({ text: ' line' + rest.join('line') });
+                    lineEl.createSpan({ text: ' line' });
+                    
+                    // Split the rest to separate the line number and image filename
+                    const [lineNum, imageFile] = rest[0].split(':');
+                    lineEl.createSpan({ text: lineNum + ': ' });
+                    
+                    // Create italicized image filename
+                    lineEl.createEl('em', { 
+                        text: imageFile.trim()
+                    });
                 } else {
                     // Handle Unused Attachments format (simple paths)
                     lineEl.innerHTML = line;
