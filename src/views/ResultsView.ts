@@ -112,8 +112,24 @@ export class ResultsView extends ItemView {
                         text: imageFile.trim()
                     });
                 } else {
-                    // Handle Unused Attachments format (simple paths)
-                    lineEl.innerHTML = line;
+                    // Handle Unused Attachments format
+                    lineEl.createSpan({ text: '• ' });
+                    
+                    // Extract the file path from the wiki-link format
+                    const filePath = line.match(/\[\[(.*?)\|/)?.[1] || '';
+                    
+                    const link = lineEl.createEl('a', {
+                        cls: 'internal-link',
+                        text: filePath
+                    });
+                    
+                    link.addEventListener('click', (event) => {
+                        event.preventDefault();
+                        const file = this.app.vault.getAbstractFileByPath(filePath);
+                        if (file instanceof TFile) {
+                            this.app.workspace.getLeaf(false).openFile(file);
+                        }
+                    });
                 }
             }
         });
