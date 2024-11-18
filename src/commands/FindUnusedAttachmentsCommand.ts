@@ -1,4 +1,4 @@
-import { Notice } from 'obsidian';
+import { Notice, TFile } from 'obsidian';
 import { BaseCommand } from './BaseCommand';
 
 export class FindUnusedAttachmentsCommand extends BaseCommand {
@@ -10,30 +10,15 @@ export class FindUnusedAttachmentsCommand extends BaseCommand {
         const attachmentFolderPath = (this.app.vault as any).getConfig("attachmentFolderPath");
         const useDefaultAttachmentFolder = (this.app.vault as any).getConfig("useMarkdownLinks");
 
-        const attachmentFolders: string[] = [];
-        if (attachmentFolderPath && useDefaultAttachmentFolder) {
-            attachmentFolders.push(attachmentFolderPath.replace(/^\/|\/$/g, ''));
-        }
+        const imageFiles = this.getImageFiles(allFiles, imageExtensions, attachmentFolderPath, useDefaultAttachmentFolder);
 
-        const imageFiles = allFiles.filter(file => {
-            const isImage = imageExtensions.some(ext => file.extension.toLowerCase() === ext);
-            
-            if (!useDefaultAttachmentFolder || attachmentFolders.length === 0) {
-                return isImage;
-            }
-            
-            return isImage && attachmentFolders.some(folder => {
-                const filePath = file.path.replace(/^\/|\/$/g, '');
-                return filePath.startsWith(folder);
-            });
-        });
+        const referencedImages = await this.buildReferencedImagesSet();
 
         let unusedAttachmentsCount = 0;
         let results: string[] = [];
 
         for (const imageFile of imageFiles) {
-            const isUsed = await this.isImageReferenced(imageFile.name);
-            if (!isUsed) {
+            if (!referencedImages.has(imageFile.name)) {
                 const logMessage = `• [[${imageFile.path}|${imageFile.path}]]`;
                 console.log('Adding unused attachment:', logMessage);
                 results.push(logMessage);
@@ -48,18 +33,37 @@ export class FindUnusedAttachmentsCommand extends BaseCommand {
         new Notice(`Found ${unusedAttachmentsCount} unused ${unusedAttachmentsCount === 1 ? 'attachment' : 'attachments'}`);
     }
 
-    private async isImageReferenced(imageName: string): Promise<boolean> {
+    private getImageFiles(allFiles: TFile[], imageExtensions: string[], attachmentFolderPath: string, useDefaultAttachmentFolder: boolean) {
+        const attachmentFolders: string[] = [];
+        if (attachmentFolderPath && useDefaultAttachmentFolder) {
+            attachmentFolders.push(attachmentFolderPath.replace(/^\/|\/$/g, ''));
+        }
+
+        return allFiles.filter(file => {
+            const isImage = imageExtensions.some(ext => file.extension.toLowerCase() === ext);
+            
+            if (!useDefaultAttachmentFolder || attachmentFolders.length === 0) {
+                return isImage;
+            }
+            
+            return isImage && attachmentFolders.some(folder => {
+                const filePath = file.path.replace(/^\/|\/$/g, '');
+                return filePath.startsWith(folder);
+            });
+        });
+    }
+
+    private async buildReferencedImagesSet(): Promise<Set<string>> {
         const markdownFiles = this.app.vault.getMarkdownFiles();
+        const referencedImages = new Set<string>();
         
         for (const file of markdownFiles) {
             const content = await this.app.vault.read(file);
             const imageLinks = this.extractImageLinks(content);
-            if (imageLinks.includes(imageName)) {
-                return true;
-            }
+            imageLinks.forEach(imageName => referencedImages.add(imageName));
         }
         
-        return false;
+        return referencedImages;
     }
 
     protected extractImageLinks(content: string): string[] {
