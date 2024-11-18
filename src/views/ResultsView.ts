@@ -69,57 +69,44 @@ export class ResultsView extends ItemView {
             return;
         }
 
-        if (this.content.includes('---')) {
-            const lines = this.content?.split('\n') || [];
+        const lines = this.content?.split('\n') || [];
+        lines.forEach(line => {
+            if (!line) return;
             
-            lines.forEach(line => {
-                if (!line) return;
+            if (line.startsWith('Summary:')) {
+                const summaryEl = contentDiv.createEl('div', {
+                    cls: 'linkspy-results-summary'
+                });
+                summaryEl.createEl('strong', { text: line });
+            } else if (line.startsWith('•')) {
+                const lineEl = contentDiv.createDiv();
                 
-                if (line.startsWith('Summary:')) {
-                    const summaryEl = contentDiv.createEl('div', {
-                        cls: 'linkspy-results-summary'
-                    });
-                    summaryEl.createEl('strong', { text: line });
-
-                } else if (line.includes('"') && !line.startsWith('---')) {
-                    const [filePath, ...rest] = (line.substring(2)?.split('" line ') || []);
-                    if (!filePath || !rest.length) return;
+                if (line.includes('line')) {
+                    // Handle Missing Attachments format (with line numbers)
+                    const [pathPart, ...rest] = line.substring(2).split('line');
+                    const filePath = pathPart.match(/\[\[(.*?)\|/)?.[1] || '';
                     
-                    const lineEl = contentDiv.createDiv();
                     lineEl.createSpan({ text: '• ' });
                     
                     const link = lineEl.createEl('a', {
                         cls: 'internal-link',
-                        text: filePath
+                        text: filePath.replace(/[\[\]"]/g, '')
                     });
                     
                     link.addEventListener('click', (event) => {
                         event.preventDefault();
-                        const file = this.app.vault.getAbstractFileByPath(filePath.replace(/"/g, ''));
+                        const file = this.app.vault.getAbstractFileByPath(filePath);
                         if (file instanceof TFile) {
                             this.app.workspace.getLeaf(false).openFile(file);
                         }
                     });
                     
-                    const [lineNum, imageText] = (rest[0]?.split(': ') || []);
-                    if (!lineNum || !imageText) return;
-                    
-                    lineEl.createSpan({ text: ` line ${lineNum}: ` });
-                    
-                    const italicMatch = imageText.match(/"<i>(.*?)<\/i>"/);
-                    if (italicMatch) {
-                        lineEl.createSpan({ text: '"' });
-                        lineEl.createEl('i', { text: italicMatch[1] });
-                        lineEl.createSpan({ text: '"' });
-                    }
+                    lineEl.createSpan({ text: ' line' + rest.join('line') });
+                } else {
+                    // Handle Unused Attachments format (simple paths)
+                    lineEl.innerHTML = line;
                 }
-            });
-        } else {
-            (this.content?.split('\n') || []).forEach(line => {
-                if (!line) return;
-                const lineEl = contentDiv.createDiv();
-                lineEl.innerHTML = line;
-            });
-        }
+            }
+        });
     }
 } 

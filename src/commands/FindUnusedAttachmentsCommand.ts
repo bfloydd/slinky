@@ -34,7 +34,7 @@ export class FindUnusedAttachmentsCommand extends BaseCommand {
         for (const imageFile of imageFiles) {
             const isUsed = await this.isImageReferenced(imageFile.name);
             if (!isUsed) {
-                const logMessage = `• "${imageFile.path}": "<i>Unused attachment</i>"`;
+                const logMessage = `• "${imageFile.path}"`;
                 results.push(logMessage);
                 unusedAttachmentsCount++;
             }
