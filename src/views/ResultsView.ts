@@ -79,7 +79,9 @@ export class ResultsView extends ItemView {
                 });
                 summaryEl.createEl('strong', { text: line });
             } else if (line.startsWith('•')) {
-                const lineEl = contentDiv.createDiv();
+                const lineEl = contentDiv.createDiv({
+                    cls: 'linkspy-result-line'
+                });
                 
                 if (line.includes('line')) {
                     // Handle Missing Attachments format (with line numbers)
