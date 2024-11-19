@@ -13,7 +13,7 @@
 }
 
 .linkspy-results-content div:not(.linkspy-result-line) {
-    margin-bottom: 8px;
+    margin-bottom: 4px;
     white-space: pre-wrap;
     word-break: break-word;
 }
@@ -63,11 +63,27 @@
 }
 
 .linkspy-result-line {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
     padding: 4px 8px;
+    transition: background-color 0.2s ease;
     border-radius: 4px;
-    transition: background-color 0.1s ease;
 }
 
 .linkspy-result-line:hover {
     background-color: var(--background-modifier-hover);
+}
+
+.linkspy-move-button {
+    opacity: 0;
+    transition: opacity 0.1s ease;
+}
+
+.linkspy-result-line:hover .linkspy-move-button {
+    opacity: 1;
+}
+
+.linkspy-line-content {
+    flex: 1;
 }

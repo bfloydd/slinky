@@ -2,15 +2,18 @@ import { Plugin } from 'obsidian';
 import { FindMissingAttachmentsCommand } from './src/commands/FindMissingAttachmentsCommand';
 import { FindUnusedAttachmentsCommand } from './src/commands/FindUnusedAttachmentsCommand';
 import { ResultsView, VIEW_TYPE_RESULTS } from './src/views/ResultsView';
+import { LinkSpySettingTab } from './src/settings/SettingsTab';
 
 interface LinkSpySettings {
 	mySetting: string;
 	attachmentFolderPath: string;
+	moveToFolderPath: string;
 }
 
 const DEFAULT_SETTINGS: LinkSpySettings = {
 	mySetting: 'default',
-	attachmentFolderPath: ''
+	attachmentFolderPath: '',
+	moveToFolderPath: ''
 }
 
 export default class LinkSpy extends Plugin {
@@ -48,6 +51,8 @@ export default class LinkSpy extends Plugin {
 				}
 			}
 		});
+
+		this.addSettingTab(new LinkSpySettingTab(this.app, this));
 	}
 
 	onunload() {

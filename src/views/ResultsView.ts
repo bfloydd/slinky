@@ -1,4 +1,5 @@
-import { ItemView, WorkspaceLeaf, TFile } from 'obsidian';
+import { ItemView, WorkspaceLeaf, TFile, Notice } from 'obsidian';
+import { setIcon, TFolder } from 'obsidian';
 
 export const VIEW_TYPE_RESULTS = "linkspy-results-view";
 
@@ -83,14 +84,41 @@ export class ResultsView extends ItemView {
                     cls: 'linkspy-result-line'
                 });
                 
+                // Create a container for the line content and button
+                const lineContentEl = lineEl.createDiv({
+                    cls: 'linkspy-line-content'
+                });
+
+                // Extract filePath from the line
+                const filePath = line.match(/\[\[(.*?)\|/)?.[1] || '';
+
+                // Only create move button for unused attachments (lines without 'line' in them)
+                if (!line.includes('line')) {
+                    // Create a container for the move button
+                    const buttonEl = lineEl.createDiv({
+                        cls: 'linkspy-move-button'
+                    });
+                    
+                    // Add the move button with icon
+                    const moveButton = buttonEl.createEl('button', {
+                        cls: 'clickable-icon'
+                    });
+                    setIcon(moveButton, 'folder-input');
+
+                    moveButton.addEventListener('click', async (e) => {
+                        e.stopPropagation();
+                        await this.handleMoveFile(filePath);
+                    });
+                }
+
                 if (line.includes('line')) {
                     // Handle Missing Attachments format (with line numbers)
                     const [pathPart, ...rest] = line.substring(2).split('line');
                     const filePath = pathPart.match(/\[\[(.*?)\|/)?.[1] || '';
                     
-                    lineEl.createSpan({ text: '• ' });
+                    lineContentEl.createSpan({ text: '• ' });
                     
-                    const link = lineEl.createEl('a', {
+                    const link = lineContentEl.createEl('a', {
                         cls: 'internal-link',
                         text: filePath.replace(/[\[\]"]/g, '')
                     });
@@ -103,24 +131,24 @@ export class ResultsView extends ItemView {
                         }
                     });
                     
-                    lineEl.createSpan({ text: ' line' });
+                    lineContentEl.createSpan({ text: ' line' });
                     
                     // Split the rest to separate the line number and image filename
                     const [lineNum, imageFile] = rest[0].split(':');
-                    lineEl.createSpan({ text: lineNum + ': ' });
+                    lineContentEl.createSpan({ text: lineNum + ': ' });
                     
                     // Create italicized image filename
-                    lineEl.createEl('em', { 
+                    lineContentEl.createEl('em', { 
                         text: imageFile.trim()
                     });
                 } else {
                     // Handle Unused Attachments format
-                    lineEl.createSpan({ text: '• ' });
+                    lineContentEl.createSpan({ text: '• ' });
                     
                     // Extract the file path from the wiki-link format
                     const filePath = line.match(/\[\[(.*?)\|/)?.[1] || '';
                     
-                    const link = lineEl.createEl('a', {
+                    const link = lineContentEl.createEl('a', {
                         cls: 'internal-link',
                         text: filePath
                     });
@@ -135,5 +163,38 @@ export class ResultsView extends ItemView {
                 }
             }
         });
+    }
+
+    private async handleMoveFile(filePath: string) {
+        const plugin = (this.app as any).plugins.plugins['linkspy'];
+        const moveToPath = plugin.settings.moveToFolderPath;
+
+        if (!moveToPath) {
+            new Notice('Please set a destination folder in LinkSpy settings first');
+            return;
+        }
+
+        const file = this.app.vault.getAbstractFileByPath(filePath);
+        const targetFolder = this.app.vault.getAbstractFileByPath(moveToPath);
+
+        if (!file) {
+            new Notice('Source file not found');
+            return;
+        }
+
+        if (!targetFolder || !(targetFolder instanceof TFolder)) {
+            new Notice('Destination folder not found');
+            return;
+        }
+
+        try {
+            await this.app.fileManager.renameFile(
+                file,
+                `${moveToPath}/${file.name}`
+            );
+            new Notice(`Moved ${file.name} to ${moveToPath}`);
+        } catch (error) {
+            new Notice(`Failed to move file: ${error}`);
+        }
     }
 } 
