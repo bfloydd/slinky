@@ -108,12 +108,14 @@ export class ResultsView extends ItemView {
                     searchButton.addEventListener('click', (e) => {
                         e.stopPropagation();
                         const fileName = filePath.split('/').pop() || '';
-                        // Open search with quoted filename
-                        (this.app as any).internalPlugins.getPluginById('global-search').instance.openGlobalSearch(`"${fileName}"`);
+                        // Remove file extension and get base name
+                        const baseFileName = fileName.replace(/\.[^/.]+$/, '');
+                        // Open search with quoted filename (without extension)
+                        (this.app as any).internalPlugins.getPluginById('global-search').instance.openGlobalSearch(`"${baseFileName}"`);
                         const searchLeaf = this.app.workspace.getLeavesOfType('search')[0];
                         if (searchLeaf) {
                             const searchView = searchLeaf.view as any;
-                            searchView.searchComponent.setValue(`"${fileName}"`);
+                            searchView.searchComponent.setValue(`"${baseFileName}"`);
                         }
                     });
                     

@@ -1,7 +1,7 @@
 {
 	"id": "linkspy",
 	"name": "LinkSpy",
-	"version": "0.1.0",
+	"version": "0.1.1",
 	"minAppVersion": "0.15.0",
 	"description": "Investigate link health in Obsidian",
 	"author": "Ben Floyd",
