@@ -192,6 +192,22 @@ export class ResultsView extends ItemView {
                 file,
                 `${moveToPath}/${file.name}`
             );
+            
+            // Remove the line from content and update view
+            const lines = this.content.split('\n');
+            const updatedLines = lines.filter(line => !line.includes(filePath));
+            
+            // Update the summary count
+            const summaryLine = updatedLines[updatedLines.length - 1];
+            if (summaryLine && summaryLine.startsWith('Summary:')) {
+                const count = (summaryLine.match(/\d+/) || ['0'])[0];
+                const newCount = parseInt(count) - 1;
+                updatedLines[updatedLines.length - 1] = `Summary: ${newCount} unused ${newCount === 1 ? 'attachment' : 'attachments'} found`;
+            }
+            
+            this.content = updatedLines.join('\n');
+            await this.updateView();
+            
             new Notice(`Moved ${file.name} to ${moveToPath}`);
         } catch (error) {
             new Notice(`Failed to move file: ${error}`);
