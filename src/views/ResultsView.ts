@@ -94,13 +94,31 @@ export class ResultsView extends ItemView {
 
                 // Only create move button for unused attachments (lines without 'line' in them)
                 if (!line.includes('line')) {
-                    // Create a container for the move button
-                    const buttonEl = lineEl.createDiv({
-                        cls: 'linkspy-move-button'
+                    // Create a container for the buttons
+                    const buttonsContainer = lineEl.createDiv({
+                        cls: 'linkspy-buttons-container'
+                    });
+                    
+                    // Add the search button
+                    const searchButton = buttonsContainer.createEl('button', {
+                        cls: 'clickable-icon'
+                    });
+                    setIcon(searchButton, 'search');
+
+                    searchButton.addEventListener('click', (e) => {
+                        e.stopPropagation();
+                        const fileName = filePath.split('/').pop() || '';
+                        // Open search with quoted filename
+                        (this.app as any).internalPlugins.getPluginById('global-search').instance.openGlobalSearch(`"${fileName}"`);
+                        const searchLeaf = this.app.workspace.getLeavesOfType('search')[0];
+                        if (searchLeaf) {
+                            const searchView = searchLeaf.view as any;
+                            searchView.searchComponent.setValue(`"${fileName}"`);
+                        }
                     });
                     
                     // Add the move button with icon
-                    const moveButton = buttonEl.createEl('button', {
+                    const moveButton = buttonsContainer.createEl('button', {
                         cls: 'clickable-icon'
                     });
                     setIcon(moveButton, 'folder-input');

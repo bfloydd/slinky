@@ -75,12 +75,14 @@
     background-color: var(--background-modifier-hover);
 }
 
-.linkspy-move-button {
+.linkspy-buttons-container {
     opacity: 0;
     transition: opacity 0.1s ease;
+    display: flex;
+    gap: 4px;
 }
 
-.linkspy-result-line:hover .linkspy-move-button {
+.linkspy-result-line:hover .linkspy-buttons-container {
     opacity: 1;
 }
 
