@@ -65,12 +65,39 @@ export class FindUnusedAttachmentsCommand extends BaseCommand {
 
     private async buildReferencedImagesSet(): Promise<Set<string>> {
         const markdownFiles = this.app.vault.getMarkdownFiles();
+        const canvasFiles = this.app.vault.getFiles().filter(file => file.extension === 'canvas');
         const referencedImages = new Set<string>();
         
+        // Process markdown files
         for (const file of markdownFiles) {
             const content = await this.app.vault.read(file);
             const imageLinks = this.extractImageLinks(content);
             imageLinks.forEach(imageName => referencedImages.add(imageName));
+        }
+
+        // Process canvas files
+        for (const file of canvasFiles) {
+            const content = await this.app.vault.read(file);
+            try {
+                const canvasData = JSON.parse(content);
+                if (canvasData.nodes) {
+                    canvasData.nodes.forEach((node: any) => {
+                        // Check file property for direct file attachments
+                        if (node.file) {
+                            const filename = node.file.split('/').pop();
+                            if (filename) referencedImages.add(filename);
+                        }
+                        
+                        // Check text content in note nodes for markdown image references
+                        if (node.type === 'text' && node.text) {
+                            const imageLinks = this.extractImageLinks(node.text);
+                            imageLinks.forEach(imageName => referencedImages.add(imageName));
+                        }
+                    });
+                }
+            } catch (e) {
+                console.error('Error parsing canvas file:', e);
+            }
         }
         
         return referencedImages;
