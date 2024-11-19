@@ -22,6 +22,8 @@ export class LinkSpySettingTab extends PluginSettingTab {
         const { containerEl } = this;
         containerEl.empty();
 
+        containerEl.createEl('h3', { text: 'Find Unused Attachments' });
+
         new Setting(containerEl)
             .setName('Move to folder')
             .setDesc('Select the folder where files will be moved to')
@@ -37,5 +39,15 @@ export class LinkSpySettingTab extends PluginSettingTab {
                         await this.plugin.saveSettings();
                     });
             });
+
+        new Setting(containerEl)
+            .setName('Ignore move to folder')
+            .setDesc('When searching for unused attachments, ignore files in the move to folder')
+            .addToggle(toggle => toggle
+                .setValue(this.plugin.settings.ignoreMoveToFolder)
+                .onChange(async (value) => {
+                    this.plugin.settings.ignoreMoveToFolder = value;
+                    await this.plugin.saveSettings();
+                }));
     }
 } 

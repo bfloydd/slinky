@@ -8,12 +8,14 @@ interface LinkSpySettings {
 	mySetting: string;
 	attachmentFolderPath: string;
 	moveToFolderPath: string;
+	ignoreMoveToFolder: boolean;
 }
 
 const DEFAULT_SETTINGS: LinkSpySettings = {
 	mySetting: 'default',
 	attachmentFolderPath: '',
-	moveToFolderPath: ''
+	moveToFolderPath: '',
+	ignoreMoveToFolder: true,
 }
 
 export default class LinkSpy extends Plugin {

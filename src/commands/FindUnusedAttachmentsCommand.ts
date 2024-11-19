@@ -39,9 +39,19 @@ export class FindUnusedAttachmentsCommand extends BaseCommand {
             attachmentFolders.push(attachmentFolderPath.replace(/^\/|\/$/g, ''));
         }
 
+        // Get the move to folder path and ignore setting
+        const plugin = (this.app as any).plugins.plugins['linkspy'];
+        const moveToPath = plugin.settings.moveToFolderPath;
+        const ignoreMoveToFolder = plugin.settings.ignoreMoveToFolder;
+
         return allFiles.filter(file => {
             const isImage = imageExtensions.some(ext => file.extension.toLowerCase() === ext);
             
+            // Skip files in the move to folder if ignore is enabled
+            if (ignoreMoveToFolder && moveToPath && file.path.startsWith(moveToPath)) {
+                return false;
+            }
+
             if (!useDefaultAttachmentFolder || attachmentFolders.length === 0) {
                 return isImage;
             }
