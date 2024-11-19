@@ -10,14 +10,16 @@ export abstract class BaseCommand {
     abstract execute(): Promise<void>;
 
     protected extractImageLinks(line: string): string[] {
-        const regex = /!?\[\[(.*?\.(jpg|jpeg|png|gif|bmp))(?:\|.*?)?\]\]/gi;
+        const regex = /(?:!\[\[(.*?\.(jpg|jpeg|png|gif|bmp))(?:\|.*?)?\]\])|(?:\[\[(.*?\.(jpg|jpeg|png|gif|bmp))(?:\|.*?)?\]\])/gi;
         const matches: string[] = [];
         let match;
 
         while ((match = regex.exec(line)) !== null) {
-            const fullPath = match[1];
-            const filename = fullPath.split('/').pop() || '';
-            matches.push(filename);
+            const fullPath = match[1] || match[3];
+            if (fullPath) {
+                const filename = fullPath.split('/').pop() || '';
+                matches.push(filename);
+            }
         }
         return matches;
     }

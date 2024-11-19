@@ -104,8 +104,8 @@ export class FindUnusedAttachmentsCommand extends BaseCommand {
     }
 
     protected extractImageLinks(content: string): string[] {
-        const markdownImageRegex = /!\[.*?\]\((.*?)\)/g;
-        const wikiImageRegex = /!\[\[(.*?)\]\]/g;
+        const markdownImageRegex = /!\[.*?\]\((.*?)\)/g;  // Standard markdown
+        const wikiImageRegex = /(?:!\[\[(.*?\.(jpg|jpeg|png|gif|bmp))(?:\|.*?)?\]\])|(?:\[\[(.*?\.(jpg|jpeg|png|gif|bmp))(?:\|.*?)?\]\])/gi;  // Both ![[]] and [[]] wiki-links
         
         const links: string[] = [];
         
@@ -121,10 +121,11 @@ export class FindUnusedAttachmentsCommand extends BaseCommand {
             }
         }
         
-        // Extract wiki style links
+        // Extract both types of wiki style links
         while ((match = wikiImageRegex.exec(content)) !== null) {
-            if (match[1]) {
-                const path = match[1].split('#')[0].split('|')[0].trim();
+            const fullPath = match[1] || match[3];  // match[1] for ![[]], match[3] for [[]]
+            if (fullPath) {
+                const path = fullPath.split('#')[0].split('|')[0].trim();
                 const filename = path.split('/').pop();
                 if (filename) {
                     links.push(filename);
