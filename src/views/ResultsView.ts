@@ -92,8 +92,44 @@ export class ResultsView extends ItemView {
                 // Extract filePath from the line
                 const filePath = line.match(/\[\[(.*?)\|/)?.[1] || '';
 
-                // Only create move button for unused attachments (lines without 'line' in them)
-                if (!line.includes('line')) {
+                // Only create buttons for backlinks with missing files
+                if (this.title === 'Backlinks With Missing Files') {
+                    // Create a container for the buttons
+                    const buttonsContainer = lineEl.createDiv({
+                        cls: 'linkspy-buttons-container'
+                    });
+                    
+                    // Add the search button
+                    const searchButton = buttonsContainer.createEl('button', {
+                        cls: 'clickable-icon'
+                    });
+                    setIcon(searchButton, 'search');
+
+                    searchButton.addEventListener('click', (e) => {
+                        e.stopPropagation();
+                        const fileName = filePath.split('/').pop() || '';
+                        // Remove file extension and get base name
+                        const baseFileName = fileName.replace(/\.[^/.]+$/, '');
+                        // Open search with quoted filename (without extension)
+                        (this.app as any).internalPlugins.getPluginById('global-search').instance.openGlobalSearch(`"${baseFileName}"`);
+                        const searchLeaf = this.app.workspace.getLeavesOfType('search')[0];
+                        if (searchLeaf) {
+                            const searchView = searchLeaf.view as any;
+                            searchView.searchComponent.setValue(`"${baseFileName}"`);
+                        }
+                    });
+                    
+                    // Add the create button with icon
+                    const createButton = buttonsContainer.createEl('button', {
+                        cls: 'clickable-icon'
+                    });
+                    setIcon(createButton, 'file-plus');
+
+                    createButton.addEventListener('click', async (e) => {
+                        e.stopPropagation();
+                        await this.handleCreateFile(line);
+                    });
+                } else if (!line.includes('line')) {
                     // Create a container for the buttons
                     const buttonsContainer = lineEl.createDiv({
                         cls: 'linkspy-buttons-container'
@@ -231,6 +267,49 @@ export class ResultsView extends ItemView {
             new Notice(`Moved ${file.name} to ${moveToPath}`);
         } catch (error) {
             new Notice(`Failed to move file: ${error}`);
+        }
+    }
+
+    private async handleCreateFile(line: string) {
+        // Extract the missing file path from the line
+        // Format is "• [[source|source]] → [[missing]]"
+        const missingMatch = line.match(/→ \[\[(.*?)\]\]/);
+        if (!missingMatch) {
+            new Notice('Could not determine file to create');
+            return;
+        }
+
+        const missingPath = missingMatch[1];
+        const fullPath = missingPath.endsWith('.md') ? missingPath : `${missingPath}.md`;
+
+        try {
+            // Create the file
+            await this.app.vault.create(fullPath, '');
+            
+            // Remove the line from content and update view
+            const lines = this.content.split('\n');
+            const updatedLines = lines.filter(l => l !== line);
+            
+            // Update the summary count
+            const summaryLine = updatedLines[updatedLines.length - 1];
+            if (summaryLine && summaryLine.startsWith('Summary:')) {
+                const count = (summaryLine.match(/\d+/) || ['0'])[0];
+                const newCount = parseInt(count) - 1;
+                updatedLines[updatedLines.length - 1] = `Summary: ${newCount} ${newCount === 1 ? 'backlink' : 'backlinks'} to non-existent files found`;
+            }
+            
+            this.content = updatedLines.join('\n');
+            await this.updateView();
+            
+            // Open the newly created file
+            const newFile = this.app.vault.getAbstractFileByPath(fullPath);
+            if (newFile instanceof TFile) {
+                await this.app.workspace.getLeaf(false).openFile(newFile);
+            }
+            
+            new Notice(`Created file: ${fullPath}`);
+        } catch (error) {
+            new Notice(`Failed to create file: ${error}`);
         }
     }
 } 
