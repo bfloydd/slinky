@@ -3,6 +3,7 @@ import { FindMissingAttachmentsCommand } from './src/commands/FindMissingAttachm
 import { FindUnusedAttachmentsCommand } from './src/commands/FindUnusedAttachmentsCommand';
 import { ResultsView, VIEW_TYPE_RESULTS } from './src/views/ResultsView';
 import { LinkSpySettingTab } from './src/settings/SettingsTab';
+import { FindBacklinksWithMissingFileCommand } from './src/commands/FindBacklinksWithMissingFileCommand';
 
 interface LinkSpySettings {
 	mySetting: string;
@@ -49,6 +50,18 @@ export default class LinkSpy extends Plugin {
 				const view = await this.activateView();
 				if (view) {
 					const command = new FindUnusedAttachmentsCommand(this.app, view);
+					await command.execute();
+				}
+			}
+		});
+
+		this.addCommand({
+			id: 'find-backlinks-with-missing-file',
+			name: 'Find backlinks with missing file',
+			callback: async () => {
+				const view = await this.activateView();
+				if (view) {
+					const command = new FindBacklinksWithMissingFileCommand(this.app, view);
 					await command.execute();
 				}
 			}
