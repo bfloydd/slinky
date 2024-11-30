@@ -70,11 +70,27 @@ export class ResultsView extends ItemView {
             cls: 'linkspy-content-container'
         });
 
-        await MarkdownRenderer.renderMarkdown(
+        await MarkdownRenderer.render(
+            this.app,
             this.content,
             contentContainer,
             '',
             this
         );
+
+        // Add event listeners to handle link clicks
+        contentContainer.querySelectorAll('a.internal-link').forEach(link => {
+            link.addEventListener('click', async (event) => {
+                event.preventDefault();
+                const path = (event.currentTarget as HTMLElement).getAttribute('href');
+                if (path) {
+                    const file = this.app.vault.getAbstractFileByPath(path);
+                    if (file instanceof TFile) {
+                        const leaf = this.app.workspace.getLeaf();
+                        await leaf.openFile(file);
+                    }
+                }
+            });
+        });
     }
 } 
