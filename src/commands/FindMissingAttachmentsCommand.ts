@@ -40,7 +40,11 @@ export class FindMissingAttachmentsCommand extends BaseCommand {
         console.log('Final results for missing attachments:', results);
         results.push('\n---');
         results.push(`Summary: ${missingAttachmentsCount} missing ${missingAttachmentsCount === 1 ? 'attachment' : 'attachments'} found`);
-        await this.resultsView.setContent(results.join('\n'), 'Missing Attachments');
+        await this.display(results, 'Missing Attachments');
         new Notice(`Found ${missingAttachmentsCount} missing ${missingAttachmentsCount === 1 ? 'attachment' : 'attachments'}`);
+    }
+
+    async display(results: string[], title: string) {
+        await this.resultsView.setContent(results.join('\n'), title);
     }
 } 

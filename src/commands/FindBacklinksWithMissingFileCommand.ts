@@ -44,9 +44,12 @@ export class FindBacklinksWithMissingFileCommand extends BaseCommand {
         results.push('\n---');
         results.push(`Summary: ${missingFileCount} ${missingFileCount === 1 ? 'backlink' : 'backlinks'} to non-existent files found`);
 
-        // Set the content with proper markdown formatting
-        await this.resultsView.setContent(results.join('\n'), 'Backlinks With Missing Files');
+        await this.display(results, 'Backlinks With Missing Files');
         new Notice(`Found ${missingFileCount} ${missingFileCount === 1 ? 'backlink' : 'backlinks'} to non-existent files`);
+    }
+
+    async display(results: string[], title: string) {
+        await this.resultsView.setContent(results.join('\n'), title);
     }
 
     private extractBacklinks(content: string): string[] {

@@ -29,8 +29,65 @@ export class FindUnusedAttachmentsCommand extends BaseCommand {
         console.log('Final results for unused attachments:', results);
         results.push('\n---');
         results.push(`Summary: ${unusedAttachmentsCount} unused ${unusedAttachmentsCount === 1 ? 'attachment' : 'attachments'} found`);
-        await this.resultsView.setContent(results.join('\n'), 'Unused Attachments');
+        await this.display(results, 'Unused Attachments');
         new Notice(`Found ${unusedAttachmentsCount} unused ${unusedAttachmentsCount === 1 ? 'attachment' : 'attachments'}`);
+    }
+
+    async display(results: string[], title: string) {
+        // First, set the basic markdown content
+        await this.resultsView.setContent(results.join('\n'), title);
+        
+        // Then add the interactive elements directly
+        const container = this.resultsView.containerEl;
+        
+        // Reveal file handler
+        container.querySelectorAll('.linkspy-icon[aria-label="Reveal file in navigation"]').forEach(icon => {
+            icon.addEventListener('click', async (event) => {
+                const path = (event.currentTarget as HTMLElement).dataset.path;
+                if (path) {
+                    const file = this.app.vault.getAbstractFileByPath(path);
+                    if (file instanceof TFile) {
+                        const leaf = this.app.workspace.getLeaf();
+                        await leaf.openFile(file);
+                    }
+                }
+            });
+        });
+
+        // Move to folder handler
+        container.querySelectorAll('.linkspy-icon[aria-label="Move to folder"]').forEach(icon => {
+            icon.addEventListener('click', async (event) => {
+                const path = (event.currentTarget as HTMLElement).dataset.path;
+                if (path) {
+                    const file = this.app.vault.getAbstractFileByPath(path);
+                    if (file instanceof TFile) {
+                        // Get the move to folder path from settings
+                        const plugin = (this.app as any).plugins.plugins['linkspy'];
+                        const moveToPath = plugin.settings.moveToFolderPath;
+                        
+                        if (moveToPath) {
+                            try {
+                                // Ensure the target folder exists
+                                await this.app.vault.createFolder(moveToPath).catch(() => {});
+                                
+                                // Move the file
+                                const newPath = `${moveToPath}/${file.name}`;
+                                await this.app.fileManager.renameFile(file, newPath);
+                                
+                                // Remove the item from the results view
+                                (event.currentTarget as HTMLElement).closest('.linkspy-result-item')?.remove();
+                                
+                                new Notice(`Moved ${file.name} to ${moveToPath}`);
+                            } catch (error) {
+                                new Notice(`Failed to move file: ${error}`);
+                            }
+                        } else {
+                            new Notice('Please set a move to folder path in settings');
+                        }
+                    }
+                }
+            });
+        });
     }
 
     private getImageFiles(allFiles: TFile[], imageExtensions: string[], attachmentFolderPath: string, useDefaultAttachmentFolder: boolean) {

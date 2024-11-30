@@ -89,3 +89,42 @@
 .linkspy-line-content {
     flex: 1;
 }
+
+
+
+
+
+
+
+
+
+
+
+.linkspy-result-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 4px 0;
+}
+
+.linkspy-result-item:hover {
+    background-color: var(--background-secondary);
+}
+
+.linkspy-action-icons {
+    opacity: 0;
+    transition: opacity 0.2s ease-in-out;
+}
+
+.linkspy-result-item:hover .linkspy-action-icons {
+    opacity: 1;
+}
+
+.linkspy-icon {
+    cursor: pointer;
+    padding: 0 4px;
+}
+
+.linkspy-icon:hover {
+    color: var(--text-accent);
+}
