@@ -129,11 +129,3 @@
 .linkspy-icon:hover {
     color: var(--text-accent);
 }
-
-.linkspy-clickable {
-    cursor: pointer;
-}
-
-.linkspy-clickable:hover {
-    background-color: var(--background-modifier-hover);
-}
