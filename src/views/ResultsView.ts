@@ -21,6 +21,10 @@ export class ResultsView extends ItemView {
         return "LinkSpy Results";
     }
 
+    getIcon(): string {
+        return "brackets-with-eye";
+    }
+
     async setContent(content: string, title: string, resultItems: ResultItem[]) {
         this.content = content;
         this.title = title;

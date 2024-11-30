@@ -1,4 +1,4 @@
-import { Plugin } from 'obsidian';
+import { Plugin, addIcon } from 'obsidian';
 import { FindMissingAttachmentsCommand } from './src/commands/FindMissingAttachmentsCommand';
 import { FindUnusedAttachmentsCommand } from './src/commands/FindUnusedAttachmentsCommand';
 import { ResultsView, VIEW_TYPE_RESULTS } from './src/views/ResultsView';
@@ -68,6 +68,20 @@ export default class LinkSpy extends Plugin {
 		});
 
 		this.addSettingTab(new LinkSpySettingTab(this.app, this));
+
+		addIcon("brackets-with-eye", `<svg width="100" height="100" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg" stroke="currentColor" fill="none" stroke-width="6" stroke-linecap="round" stroke-linejoin="round">
+		  <!-- Left [ with hook -->
+		  <path d="M10 10v80h15"/>
+		  <path d="M10 10h15"/>
+		  
+		  <!-- Eye (larger horizontal almond) -->
+		  <path d="M25 50C25 35 40 30 50 30C60 30 75 35 75 50C75 65 60 70 50 70C40 70 25 65 25 50Z"/>
+		  <circle cx="50" cy="50" r="8"/>
+		  
+		  <!-- Right ] with hook -->
+		  <path d="M90 10v80h-15"/>
+		  <path d="M90 10h-15"/>
+		</svg>`);
 	}
 
 	onunload() {
