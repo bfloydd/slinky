@@ -90,15 +90,15 @@
     flex: 1;
 }
 
+.linkspy-line-content a {
+    text-decoration: none;
+    color: var(--link-color);
+}
 
-
-
-
-
-
-
-
-
+.linkspy-line-content a:hover {
+    text-decoration: underline;
+    color: var(--link-color-hover);
+}
 
 .linkspy-result-item {
     display: flex;
@@ -128,4 +128,12 @@
 
 .linkspy-icon:hover {
     color: var(--text-accent);
+}
+
+.linkspy-clickable {
+    cursor: pointer;
+}
+
+.linkspy-clickable:hover {
+    background-color: var(--background-modifier-hover);
 }

@@ -51,7 +51,20 @@ export class ResultsView extends ItemView {
             const resultLine = resultsContainer.createDiv({ cls: 'linkspy-result-line' });
             
             const lineContent = resultLine.createDiv({ cls: 'linkspy-line-content' });
-            await MarkdownRenderer.render(this.app, item.content, lineContent, '', this);
+            
+            await MarkdownRenderer.render(this.app, item.content, lineContent, item.path, this);
+
+            // Add click handler to the entire line
+            lineContent.addEventListener('click', async () => {
+                const file = this.app.vault.getAbstractFileByPath(item.path);
+                if (file instanceof TFile) {
+                    const leaf = this.app.workspace.getLeaf();
+                    await leaf.openFile(file);
+                }
+            });
+
+            // Make the line look clickable
+            lineContent.addClass('linkspy-clickable');
 
             // Add action buttons
             if (item.actions.length > 0) {
@@ -72,7 +85,8 @@ export class ResultsView extends ItemView {
         // Render summary if present
         if (this.content.includes('---')) {
             const summaryDiv = resultsContainer.createDiv();
-            const summaryContent = this.content.split('---')[1];
+            let summaryContent = this.content.split('---')[1];
+            summaryContent = '---' + summaryContent;
             await MarkdownRenderer.render(this.app, summaryContent, summaryDiv, '', this);
         }
     }
