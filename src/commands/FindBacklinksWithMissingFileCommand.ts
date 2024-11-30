@@ -23,9 +23,8 @@ export class FindBacklinksWithMissingFileCommand extends BaseCommand {
                     // Check if the markdown file exists
                     const exists = await this.markdownFileExistsInVault(backlink);
                     if (!exists) {
-                        // Format the link using the same pattern as other commands
-                        // Using the |path format that ResultsView expects for proper link rendering
-                        const logMessage = `• [[${file.path}|${file.path}]] → [[${backlink}]]`;
+                        // Changed to show missing file as plain text instead of a wiki link
+                        const logMessage = `• [[${file.path}|${file.path}]] → ${backlink}`;
                         console.log('Adding missing backlink:', logMessage);
                         results.push(logMessage);
                         missingFileCount++;
@@ -48,20 +47,60 @@ export class FindBacklinksWithMissingFileCommand extends BaseCommand {
             if (result.startsWith('Summary:') || result === '\n---') {
                 return null;
             }
+            
+            // Extract the missing file name from the result string
+            const missingFile = result.split('→ ')[1].trim();
+            
             return {
                 content: result,
                 path: result.match(/\[\[(.*?)\|/)?.[1] ?? '',
-                actions: [{
-                    icon: 'file-search',
-                    label: 'Reveal file in navigation',
-                    onClick: async (path: string) => {
-                        const file = this.app.vault.getAbstractFileByPath(path);
-                        if (file instanceof TFile) {
-                            const leaf = this.app.workspace.getLeaf();
-                            await leaf.openFile(file);
+                actions: [
+                    {
+                        icon: 'file-search',
+                        label: 'Reveal file in navigation',
+                        onClick: async (path: string) => {
+                            const file = this.app.vault.getAbstractFileByPath(path);
+                            if (file instanceof TFile) {
+                                const leaf = this.app.workspace.getLeaf();
+                                await leaf.openFile(file);
+                            }
+                        }
+                    },
+                    {
+                        icon: 'file-plus',
+                        label: 'Create missing file',
+                        onClick: async (path: string) => {
+                            try {
+                                // Create the file
+                                const newFile = await this.app.vault.create(
+                                    missingFile.endsWith('.md') ? missingFile : `${missingFile}.md`,
+                                    ''
+                                );
+                                
+                                // Remove this item from the results
+                                const updatedResults = resultItems.filter(item => 
+                                    item && !item.content.includes(missingFile)
+                                );
+                                
+                                // Update the count and summary
+                                const newCount = updatedResults.length;
+                                const summary = `\n---\nSummary: ${newCount} ${newCount === 1 ? 'backlink' : 'backlinks'} to non-existent files found`;
+                                
+                                // Update the view
+                                await this.resultsView.setContent(summary, 'Backlinks With Missing Files', updatedResults);
+                                
+                                // Show success notice
+                                new Notice(`Created file: ${missingFile}`);
+                                
+                                // Open the new file
+                                const leaf = this.app.workspace.getLeaf();
+                                await leaf.openFile(newFile);
+                            } catch (error) {
+                                new Notice(`Failed to create file: ${error}`);
+                            }
                         }
                     }
-                }]
+                ]
             };
         }).filter((item): item is ResultItem => item !== null);
 
