@@ -87,6 +87,9 @@ export class FindUnusedAttachmentsCommand extends BaseCommand {
         const ignoreMoveToFolder = plugin.settings.ignoreMoveToFolder;
 
         return allFiles.filter(file => {
+            // Skip .canvas files
+            if (file.extension === 'canvas') return false;
+            
             const isImage = imageExtensions.some(ext => file.extension.toLowerCase() === ext);
             
             // Skip files in the move to folder if ignore is enabled

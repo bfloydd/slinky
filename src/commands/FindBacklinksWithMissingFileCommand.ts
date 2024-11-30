@@ -95,11 +95,14 @@ export class FindBacklinksWithMissingFileCommand extends BaseCommand {
     }
 
     private async markdownFileExistsInVault(filename: string): Promise<boolean> {
-        // Add .md extension if not present
+        // Add .md or .canvas extension if not present
         const mdFilename = filename.endsWith('.md') ? filename : `${filename}.md`;
-        const allFiles = this.app.vault.getMarkdownFiles();
+        const canvasFilename = filename.endsWith('.canvas') ? filename : `${filename}.canvas`;
+        
+        const allFiles = this.app.vault.getFiles();
         return allFiles.some(file =>
-            file.path === mdFilename || // Exact path match
+            file.path === mdFilename || // Exact markdown path match
+            file.path === canvasFilename || // Exact canvas path match
             file.basename === filename  // Basename match (without extension)
         );
     }

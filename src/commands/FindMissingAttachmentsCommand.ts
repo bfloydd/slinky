@@ -57,4 +57,13 @@ export class FindMissingAttachmentsCommand extends BaseCommand {
         await this.resultsView.setContent(summary, 'Missing Attachments', results);
         new Notice(`Found ${missingAttachmentsCount} missing ${missingAttachmentsCount === 1 ? 'attachment' : 'attachments'}`);
     }
+
+    protected async imageExistsInVault(filename: string): Promise<boolean> {
+        const allFiles = this.app.vault.getFiles();
+        return allFiles.some(file => 
+            file.path === filename || 
+            file.name === filename || 
+            file.basename === filename.split('.')[0]
+        );
+    }
 } 
