@@ -17,14 +17,12 @@ export class FindBacklinksWithMissingFileCommand extends BaseCommand {
                 const backlinks = this.extractBacklinks(content);
 
                 for (const backlink of backlinks) {
-                    // Skip if it's an attachment link
                     if (this.isAttachmentLink(backlink)) continue;
 
-                    // Check if the markdown file exists
                     const exists = await this.markdownFileExistsInVault(backlink);
                     if (!exists) {
-                        // Changed to show missing file as plain text instead of a wiki link
-                        const logMessage = `• [[${file.path}|${file.path}]] → ${backlink}`;
+                        const displayName = file.basename;
+                        const logMessage = `• [[${file.path}|${displayName}]] → ${backlink}`;
                         console.log('Adding missing backlink:', logMessage);
                         results.push(logMessage);
                         missingFileCount++;

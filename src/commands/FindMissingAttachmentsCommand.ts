@@ -21,7 +21,8 @@ export class FindMissingAttachmentsCommand extends BaseCommand {
                     const lineChecks = imageLinks.map(async (imageFile) => {
                         const exists = await this.imageExistsInVault(imageFile);
                         if (!exists) {
-                            const content = `• [[${file.path}]] line ${index + 1}: ${imageFile}`;
+                            const displayPath = file.path.replace(/\.md$/, '');
+                            const content = `• [[${displayPath}|${file.basename}]] line ${index + 1}: ${imageFile}`;
                             results.push({
                                 content,
                                 path: file.path,

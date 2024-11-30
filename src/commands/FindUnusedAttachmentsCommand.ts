@@ -20,7 +20,7 @@ export class FindUnusedAttachmentsCommand extends BaseCommand {
         const resultItems: ResultItem[] = imageFiles
             .filter(file => !referencedImages.has(file.name))
             .map(file => ({
-                content: `• [[${file.path}|${file.path}]]`,
+                content: `• [[${file.path}|${file.name}]]`,
                 path: file.path,
                 actions: [
                     {

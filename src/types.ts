@@ -7,5 +7,6 @@ export interface ResultAction {
 export interface ResultItem {
     content: string;
     path: string;
+    tooltip?: string;
     actions: ResultAction[];
 }
