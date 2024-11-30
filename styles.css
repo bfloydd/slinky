@@ -105,10 +105,11 @@
     justify-content: space-between;
     align-items: center;
     padding: 4px 0;
+    transition: background-color 0.2s ease;
 }
 
 .linkspy-result-item:hover {
-    background-color: var(--background-secondary);
+    background-color: var(--background-modifier-hover);
 }
 
 .linkspy-action-icons {

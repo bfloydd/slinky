@@ -1,12 +1,13 @@
-import { Notice } from 'obsidian';
+import { Notice, TFile } from 'obsidian';
 import { BaseCommand } from './BaseCommand';
+import { ResultItem } from '../types';
 
 export class FindMissingAttachmentsCommand extends BaseCommand {
     async execute(): Promise<void> {
         console.log('findMissingAttachments');
         let missingAttachmentsCount = 0;
         const files = this.app.vault.getMarkdownFiles();
-        let results: string[] = [];
+        const results: ResultItem[] = [];
 
         for (const file of files) {
             try {
@@ -20,9 +21,22 @@ export class FindMissingAttachmentsCommand extends BaseCommand {
                     const lineChecks = imageLinks.map(async (imageFile) => {
                         const exists = await this.imageExistsInVault(imageFile);
                         if (!exists) {
-                            const logMessage = `• [[${file.path}|${file.path}]] line ${index + 1}: ${imageFile}`;
-                            console.log('Adding missing attachment:', logMessage);
-                            results.push(logMessage);
+                            const content = `• [[${file.path}|${file.path}]] line ${index + 1}: ${imageFile}`;
+                            results.push({
+                                content,
+                                path: file.path,
+                                actions: [{
+                                    icon: 'file-search',
+                                    label: 'Reveal file in navigation',
+                                    onClick: async (path: string) => {
+                                        const file = this.app.vault.getAbstractFileByPath(path);
+                                        if (file instanceof TFile) {
+                                            const leaf = this.app.workspace.getLeaf();
+                                            await leaf.openFile(file);
+                                        }
+                                    }
+                                }]
+                            });
                             missingAttachmentsCount++;
                         }
                     });
@@ -33,18 +47,14 @@ export class FindMissingAttachmentsCommand extends BaseCommand {
                 await Promise.all(checksForFile);
 
             } catch (error) {
-                results.push(`Error processing file '${file.path}': ${error}`);
+                console.error(`Error processing file '${file.path}':`, error);
             }
         }
 
-        console.log('Final results for missing attachments:', results);
-        results.push('\n---');
-        results.push(`Summary: ${missingAttachmentsCount} missing ${missingAttachmentsCount === 1 ? 'attachment' : 'attachments'} found`);
-        await this.display(results, 'Missing Attachments');
+        // Add summary
+        const summary = `\n---\nSummary: ${missingAttachmentsCount} missing ${missingAttachmentsCount === 1 ? 'attachment' : 'attachments'} found`;
+        
+        await this.resultsView.setContent(summary, 'Missing Attachments', results);
         new Notice(`Found ${missingAttachmentsCount} missing ${missingAttachmentsCount === 1 ? 'attachment' : 'attachments'}`);
-    }
-
-    async display(results: string[], title: string) {
-        await this.resultsView.setContent(results.join('\n'), title);
     }
 } 

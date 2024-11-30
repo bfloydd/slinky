@@ -1,5 +1,6 @@
 import { Notice, TFile } from 'obsidian';
 import { BaseCommand } from './BaseCommand';
+import { ResultItem } from '../types';
 
 export class FindUnusedAttachmentsCommand extends BaseCommand {
     async execute(): Promise<void> {
@@ -15,79 +16,63 @@ export class FindUnusedAttachmentsCommand extends BaseCommand {
         const referencedImages = await this.buildReferencedImagesSet();
 
         let unusedAttachmentsCount = 0;
-        let results: string[] = [];
 
-        for (const imageFile of imageFiles) {
-            if (!referencedImages.has(imageFile.name)) {
-                const logMessage = `• [[${imageFile.path}|${imageFile.path}]]`;
-                console.log('Adding unused attachment:', logMessage);
-                results.push(logMessage);
-                unusedAttachmentsCount++;
-            }
-        }
+        const resultItems: ResultItem[] = imageFiles
+            .filter(file => !referencedImages.has(file.name))
+            .map(file => ({
+                content: `• [[${file.path}|${file.path}]]`,
+                path: file.path,
+                actions: [
+                    {
+                        icon: 'file-search',
+                        label: 'Reveal file in navigation',
+                        onClick: async (path) => {
+                            const file = this.app.vault.getAbstractFileByPath(path);
+                            if (file instanceof TFile) {
+                                const leaf = this.app.workspace.getLeaf();
+                                await leaf.openFile(file);
+                            }
+                        }
+                    },
+                    {
+                        icon: 'folder-input',
+                        label: 'Move to folder',
+                        onClick: async (path) => {
+                            const file = this.app.vault.getAbstractFileByPath(path);
+                            if (file instanceof TFile) {
+                                await this.moveFileToFolder(file);
+                            }
+                        }
+                    }
+                ]
+            }));
 
-        console.log('Final results for unused attachments:', results);
-        results.push('\n---');
-        results.push(`Summary: ${unusedAttachmentsCount} unused ${unusedAttachmentsCount === 1 ? 'attachment' : 'attachments'} found`);
-        await this.display(results, 'Unused Attachments');
+        // Set the count based on the filtered results
+        unusedAttachmentsCount = resultItems.length;
+
+        // Add summary
+        const summary = `\n---\nSummary: ${unusedAttachmentsCount} unused ${unusedAttachmentsCount === 1 ? 'attachment' : 'attachments'} found`;
+        
+        await this.resultsView.setContent(summary, 'Unused Attachments', resultItems);
         new Notice(`Found ${unusedAttachmentsCount} unused ${unusedAttachmentsCount === 1 ? 'attachment' : 'attachments'}`);
     }
 
-    async display(results: string[], title: string) {
-        // First, set the basic markdown content
-        await this.resultsView.setContent(results.join('\n'), title);
+    private async moveFileToFolder(file: TFile) {
+        const plugin = (this.app as any).plugins.plugins['linkspy'];
+        const moveToPath = plugin.settings.moveToFolderPath;
         
-        // Then add the interactive elements directly
-        const container = this.resultsView.containerEl;
-        
-        // Reveal file handler
-        container.querySelectorAll('.linkspy-icon[aria-label="Reveal file in navigation"]').forEach(icon => {
-            icon.addEventListener('click', async (event) => {
-                const path = (event.currentTarget as HTMLElement).dataset.path;
-                if (path) {
-                    const file = this.app.vault.getAbstractFileByPath(path);
-                    if (file instanceof TFile) {
-                        const leaf = this.app.workspace.getLeaf();
-                        await leaf.openFile(file);
-                    }
-                }
-            });
-        });
-
-        // Move to folder handler
-        container.querySelectorAll('.linkspy-icon[aria-label="Move to folder"]').forEach(icon => {
-            icon.addEventListener('click', async (event) => {
-                const path = (event.currentTarget as HTMLElement).dataset.path;
-                if (path) {
-                    const file = this.app.vault.getAbstractFileByPath(path);
-                    if (file instanceof TFile) {
-                        // Get the move to folder path from settings
-                        const plugin = (this.app as any).plugins.plugins['linkspy'];
-                        const moveToPath = plugin.settings.moveToFolderPath;
-                        
-                        if (moveToPath) {
-                            try {
-                                // Ensure the target folder exists
-                                await this.app.vault.createFolder(moveToPath).catch(() => {});
-                                
-                                // Move the file
-                                const newPath = `${moveToPath}/${file.name}`;
-                                await this.app.fileManager.renameFile(file, newPath);
-                                
-                                // Remove the item from the results view
-                                (event.currentTarget as HTMLElement).closest('.linkspy-result-item')?.remove();
-                                
-                                new Notice(`Moved ${file.name} to ${moveToPath}`);
-                            } catch (error) {
-                                new Notice(`Failed to move file: ${error}`);
-                            }
-                        } else {
-                            new Notice('Please set a move to folder path in settings');
-                        }
-                    }
-                }
-            });
-        });
+        if (moveToPath) {
+            try {
+                await this.app.vault.createFolder(moveToPath).catch(() => {});
+                const newPath = `${moveToPath}/${file.name}`;
+                await this.app.fileManager.renameFile(file, newPath);
+                new Notice(`Moved ${file.name} to ${moveToPath}`);
+            } catch (error) {
+                new Notice(`Failed to move file: ${error}`);
+            }
+        } else {
+            new Notice('Please set a move to folder path in settings');
+        }
     }
 
     private getImageFiles(allFiles: TFile[], imageExtensions: string[], attachmentFolderPath: string, useDefaultAttachmentFolder: boolean) {

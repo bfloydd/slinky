@@ -1,6 +1,7 @@
 import { ItemView, WorkspaceLeaf, TFile, Notice } from 'obsidian';
 import { setIcon, TFolder } from 'obsidian';
 import { MarkdownRenderer } from 'obsidian';
+import { ResultItem } from '../types';
 
 export const VIEW_TYPE_RESULTS = "linkspy-results-view";
 
@@ -20,77 +21,59 @@ export class ResultsView extends ItemView {
         return "LinkSpy Results";
     }
 
-    async setContent(content: string, title?: string, postRender?: () => void) {
+    async setContent(content: string, title: string, resultItems: ResultItem[]) {
         this.content = content;
-        if (title) {
-            this.title = title;
-        }
-        await this.updateView();
-        if (postRender) {
-            postRender();
-        }
+        this.title = title;
+        await this.updateView(resultItems);
     }
 
-    async updateView() {
+    async updateView(resultItems: ResultItem[]) {
         const container = this.containerEl.children[1];
         container.empty();
         
-        // Create separate containers for each title
-        const mainTitleContainer = container.createDiv({
-            cls: 'linkspy-main-title-container'
-        });
+        // Create title containers
+        const mainTitleContainer = container.createDiv({ cls: 'linkspy-main-title-container' });
+        const subTitleContainer = container.createDiv({ cls: 'linkspy-subtitle-container' });
         
-        const subTitleContainer = container.createDiv({
-            cls: 'linkspy-subtitle-container'
-        });
+        // Add main title row
+        const titleRow = mainTitleContainer.createDiv({ cls: 'linkspy-title-row' });
+        titleRow.createEl('h1', { text: 'LinkSpy', cls: 'linkspy-main-title' });
+        titleRow.createEl('button', { cls: 'linkspy-copy-button', text: 'Copy Results' });
         
-        // Add main LinkSpy title and copy button in the same row
-        const titleRow = mainTitleContainer.createDiv({
-            cls: 'linkspy-title-row'
-        });
-        
-        titleRow.createEl('h1', { 
-            text: 'LinkSpy',
-            cls: 'linkspy-main-title'
-        });
-        
-        titleRow.createEl('button', {
-            cls: 'linkspy-copy-button',
-            text: 'Copy Results'
-        });
-        
-        // Add specific results title on next line
-        subTitleContainer.createEl('h2', { 
-            text: this.title,
-            cls: 'linkspy-results-title'
-        });
+        // Add results title
+        subTitleContainer.createEl('h2', { text: this.title, cls: 'linkspy-results-title' });
 
-        // Display the content using MarkdownRenderer
-        const contentContainer = container.createDiv({
-            cls: 'linkspy-content-container'
-        });
+        // Create results container
+        const resultsContainer = container.createDiv({ cls: 'linkspy-results-content' });
 
-        await MarkdownRenderer.render(
-            this.app,
-            this.content,
-            contentContainer,
-            '',
-            this
-        );
+        // Render each result item
+        for (const item of resultItems) {
+            const resultLine = resultsContainer.createDiv({ cls: 'linkspy-result-line' });
+            
+            const lineContent = resultLine.createDiv({ cls: 'linkspy-line-content' });
+            await MarkdownRenderer.render(this.app, item.content, lineContent, '', this);
 
-        // Add event listeners to handle link clicks
-        contentContainer.querySelectorAll('a.internal-link').forEach(link => {
-            link.addEventListener('click', async (event) => {
-                event.preventDefault();
-                const path = (event.currentTarget as HTMLElement).getAttribute('href');
-                if (path) {
-                    const file = this.app.vault.getAbstractFileByPath(path);
-                    if (file instanceof TFile) {
-                        const leaf = this.app.workspace.getLeaf();
-                        await leaf.openFile(file);
-                    }
+            // Add action buttons
+            if (item.actions.length > 0) {
+                const buttonsContainer = resultLine.createDiv({ cls: 'linkspy-buttons-container' });
+                
+                for (const action of item.actions) {
+                    const button = buttonsContainer.createDiv({
+                        cls: 'linkspy-icon',
+                        attr: { 'aria-label': action.label }
+                    });
+                    setIcon(button, action.icon);
+                    
+                    button.addEventListener('click', () => action.onClick(item.path));
                 }
-            });
-        });
+            }
+        }
+
+        // Render summary if present
+        if (this.content.includes('---')) {
+            const summaryDiv = resultsContainer.createDiv();
+            const summaryContent = this.content.split('---')[1];
+            await MarkdownRenderer.render(this.app, summaryContent, summaryDiv, '', this);
+        }
     }
 } 

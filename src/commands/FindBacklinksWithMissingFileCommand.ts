@@ -1,5 +1,6 @@
 import { Notice, TFile } from 'obsidian';
 import { BaseCommand } from './BaseCommand';
+import { ResultItem } from '../types';
 
 export class FindBacklinksWithMissingFileCommand extends BaseCommand {
     async execute(): Promise<void> {
@@ -41,15 +42,34 @@ export class FindBacklinksWithMissingFileCommand extends BaseCommand {
         }
 
         console.log('Final results for backlinks with missing files:', results);
-        results.push('\n---');
-        results.push(`Summary: ${missingFileCount} ${missingFileCount === 1 ? 'backlink' : 'backlinks'} to non-existent files found`);
 
-        await this.display(results, 'Backlinks With Missing Files');
+        const resultItems: ResultItem[] = results.map(result => {
+            // Skip the summary line if it exists
+            if (result.startsWith('Summary:') || result === '\n---') {
+                return null;
+            }
+            return {
+                content: result,
+                path: result.match(/\[\[(.*?)\|/)?.[1] ?? '',
+                actions: [{
+                    icon: 'file-search',
+                    label: 'Reveal file in navigation',
+                    onClick: async (path: string) => {
+                        const file = this.app.vault.getAbstractFileByPath(path);
+                        if (file instanceof TFile) {
+                            const leaf = this.app.workspace.getLeaf();
+                            await leaf.openFile(file);
+                        }
+                    }
+                }]
+            };
+        }).filter((item): item is ResultItem => item !== null);
+
+        // Add summary
+        const summary = `\n---\nSummary: ${missingFileCount} ${missingFileCount === 1 ? 'backlink' : 'backlinks'} to non-existent files found`;
+        
+        await this.resultsView.setContent(summary, 'Backlinks With Missing Files', resultItems);
         new Notice(`Found ${missingFileCount} ${missingFileCount === 1 ? 'backlink' : 'backlinks'} to non-existent files`);
-    }
-
-    async display(results: string[], title: string) {
-        await this.resultsView.setContent(results.join('\n'), title);
     }
 
     private extractBacklinks(content: string): string[] {
