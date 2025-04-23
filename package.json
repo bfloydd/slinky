@@ -1,5 +1,5 @@
 {
-	"name": "linkspy",
+	"name": "slinky",
 	"version": "1.0.0",
 	"description": "Investigate link health in Obsidian",
 	"main": "main.js",

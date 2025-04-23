@@ -1,6 +1,4 @@
-# LinkSpy
-
-
+# Slinky
 LinkSpy is a plugin for Obsidian that helps you investigate the health of your links.
 
 ## Adds commands
