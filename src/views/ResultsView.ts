@@ -8,6 +8,7 @@ export const VIEW_TYPE_RESULTS = "linkspy-results-view";
 export class ResultsView extends ItemView {
     private content: string = '';
     private title: string = 'LinkSpy';
+    private currentResultItems: ResultItem[] = [];
 
     constructor(leaf: WorkspaceLeaf) {
         super(leaf);
@@ -28,6 +29,7 @@ export class ResultsView extends ItemView {
     async setContent(content: string, title: string, resultItems: ResultItem[]) {
         this.content = content;
         this.title = title;
+        this.currentResultItems = resultItems;
         await this.updateView(resultItems);
     }
 
@@ -93,5 +95,13 @@ export class ResultsView extends ItemView {
             summaryContent = '---' + summaryContent;
             await MarkdownRenderer.render(this.app, summaryContent, summaryDiv, '', this);
         }
+    }
+
+    async removeItemByPath(path: string): Promise<void> {
+        // Remove the item from the current result items
+        this.currentResultItems = this.currentResultItems.filter(item => item.path !== path);
+        
+        // Update the view with the filtered items
+        await this.updateView(this.currentResultItems);
     }
 } 

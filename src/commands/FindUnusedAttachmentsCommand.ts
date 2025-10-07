@@ -40,7 +40,11 @@ export class FindUnusedAttachmentsCommand extends BaseCommand {
                         onClick: async (path) => {
                             const file = this.app.vault.getAbstractFileByPath(path);
                             if (file instanceof TFile) {
-                                await this.moveFileToFolder(file);
+                                const success = await this.moveFileToFolder(file);
+                                if (success) {
+                                    // Remove the item from the results view immediately
+                                    await this.resultsView.removeItemByPath(path);
+                                }
                             }
                         }
                     }
@@ -57,9 +61,9 @@ export class FindUnusedAttachmentsCommand extends BaseCommand {
         new Notice(`Found ${unusedAttachmentsCount} unused ${unusedAttachmentsCount === 1 ? 'attachment' : 'attachments'}`);
     }
 
-    private async moveFileToFolder(file: TFile) {
-        const plugin = (this.app as any).plugins.plugins['linkspy'];
-        const moveToPath = plugin.settings.moveToFolderPath;
+    private async moveFileToFolder(file: TFile): Promise<boolean> {
+        const plugin = (this.app as any).plugins.plugins['slinky'];
+        const moveToPath = plugin?.settings?.moveToFolderPath;
         
         if (moveToPath) {
             try {
@@ -67,11 +71,14 @@ export class FindUnusedAttachmentsCommand extends BaseCommand {
                 const newPath = `${moveToPath}/${file.name}`;
                 await this.app.fileManager.renameFile(file, newPath);
                 new Notice(`Moved ${file.name} to ${moveToPath}`);
+                return true;
             } catch (error) {
                 new Notice(`Failed to move file: ${error}`);
+                return false;
             }
         } else {
             new Notice('Please set a move to folder path in settings');
+            return false;
         }
     }
 
@@ -82,9 +89,9 @@ export class FindUnusedAttachmentsCommand extends BaseCommand {
         }
 
         // Get the move to folder path and ignore setting
-        const plugin = (this.app as any).plugins.plugins['linkspy'];
-        const moveToPath = plugin.settings.moveToFolderPath;
-        const ignoreMoveToFolder = plugin.settings.ignoreMoveToFolder;
+        const plugin = (this.app as any).plugins.plugins['slinky'];
+        const moveToPath = plugin?.settings?.moveToFolderPath || '';
+        const ignoreMoveToFolder = plugin?.settings?.ignoreMoveToFolder || false;
 
         return allFiles.filter(file => {
             // Skip .canvas files
