@@ -9,6 +9,7 @@ export class ResultsView extends ItemView {
     private content: string = '';
     private title: string = 'LinkSpy';
     private currentResultItems: ResultItem[] = [];
+    private isUnusedAttachments: boolean = false;
 
     constructor(leaf: WorkspaceLeaf) {
         super(leaf);
@@ -30,6 +31,7 @@ export class ResultsView extends ItemView {
         this.content = content;
         this.title = title;
         this.currentResultItems = resultItems;
+        this.isUnusedAttachments = title === 'Unused Attachments';
         await this.updateView(resultItems);
     }
 
@@ -45,6 +47,12 @@ export class ResultsView extends ItemView {
         const titleRow = mainTitleContainer.createDiv({ cls: 'linkspy-title-row' });
         titleRow.createEl('h1', { text: 'LinkSpy', cls: 'linkspy-main-title' });
         titleRow.createEl('button', { cls: 'linkspy-copy-button', text: 'Copy Results' });
+        
+        // Only show Move All button for unused attachments when files are found
+        if (this.isUnusedAttachments && resultItems.length > 0) {
+            const moveAllButton = titleRow.createEl('button', { cls: 'linkspy-move-all-button', text: 'Move All' });
+            moveAllButton.addEventListener('click', () => this.moveAllItems());
+        }
         
         // Add results title
         subTitleContainer.createEl('h2', { text: this.title, cls: 'linkspy-results-title' });
@@ -103,5 +111,55 @@ export class ResultsView extends ItemView {
         
         // Update the view with the filtered items
         await this.updateView(this.currentResultItems);
+    }
+
+    private async moveAllItems(): Promise<void> {
+        const plugin = (this.app as any).plugins.plugins['slinky'];
+        const moveToPath = plugin?.settings?.moveToFolderPath;
+        
+        if (!moveToPath) {
+            new Notice('Please set a move to folder path in settings');
+            return;
+        }
+
+        // Create the folder if it doesn't exist
+        try {
+            await this.app.vault.createFolder(moveToPath).catch(() => {});
+        } catch (error) {
+            new Notice(`Failed to create folder: ${error}`);
+            return;
+        }
+
+        // Move all items
+        const movedItems: string[] = [];
+        const failedItems: string[] = [];
+
+        for (const item of this.currentResultItems) {
+            const file = this.app.vault.getAbstractFileByPath(item.path);
+            if (file instanceof TFile) {
+                try {
+                    const newPath = `${moveToPath}/${file.name}`;
+                    await this.app.fileManager.renameFile(file, newPath);
+                    movedItems.push(file.name);
+                } catch (error) {
+                    failedItems.push(file.name);
+                    console.error(`Failed to move ${file.name}:`, error);
+                }
+            }
+        }
+
+        // Show results
+        if (movedItems.length > 0) {
+            new Notice(`Moved ${movedItems.length} item(s) to ${moveToPath}`);
+        }
+        if (failedItems.length > 0) {
+            new Notice(`Failed to move ${failedItems.length} item(s): ${failedItems.join(', ')}`);
+        }
+
+        // Clear the view since all items should be moved
+        if (movedItems.length > 0) {
+            this.currentResultItems = [];
+            await this.updateView([]);
+        }
     }
 } 

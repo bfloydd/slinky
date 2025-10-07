@@ -53,6 +53,22 @@
     transform: translateY(-1px);
 }
 
+.linkspy-move-all-button {
+    background-color: var(--interactive-normal);
+    color: var(--text-normal);
+    padding: 2px 4px;
+    border-radius: 2px;
+    border: 1px solid var(--background-modifier-border);
+    font-size: 0.85em;
+    transition: all 0.1s ease;
+    margin-left: 4px;
+}
+
+.linkspy-move-all-button:hover {
+    background-color: var(--interactive-hover);
+    transform: translateY(-1px);
+}
+
 .linkspy-results-summary {
     margin-top: 6px;
     padding-top: 4px;
